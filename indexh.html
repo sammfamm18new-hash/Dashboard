@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rocket Productivity RPG</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #0b0e14;
+            --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+            --accent: #3a86ff; /* Rocket Blue */
+            --high-priority: #ff006e;
+            --mid-priority: #ffbe0b;
+            --low-priority: #8338ec;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        
+        body {
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at center, #1a1f2c 0%, #0b0e14 100%);
+            color: white;
+            height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .app-container {
+            width: 95%; max-width: 1100px; height: 85vh;
+            background: var(--glass); backdrop-filter: blur(10px);
+            border: 1px solid var(--border); border-radius: 24px;
+            display: grid; grid-template-columns: 250px 1fr; overflow: hidden;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        }
+
+        /* --- Sidebar --- */
+        .sidebar { background: rgba(0,0,0,0.2); border-right: 1px solid var(--border); padding: 2rem; display: flex; flex-direction: column; align-items: center; }
+        .rocket-icon { font-size: 4rem; margin-bottom: 1rem; filter: drop-shadow(0 0 10px var(--accent)); }
+        
+        .stat-group { width: 100%; margin: 1rem 0; }
+        .bar-bg { background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; margin-top: 5px; overflow: hidden; }
+        .bar-fill { height: 100%; background: var(--accent); width: 0%; transition: 0.5s ease; }
+
+        .nav-menu { width: 100%; margin-top: 2rem; }
+        .nav-btn {
+            width: 100%; padding: 12px; border: none; border-radius: 12px;
+            background: transparent; color: #94a3b8; text-align: left; cursor: pointer;
+            transition: 0.3s; margin-bottom: 5px; font-weight: 600;
+        }
+        .nav-btn.active { background: var(--glass); color: white; border: 1px solid var(--border); }
+        .nav-btn i { margin-right: 10px; }
+
+        /* --- Main Content --- */
+        .view { display: none; padding: 3rem; height: 100%; overflow-y: auto; }
+        .view.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .card { background: var(--glass); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1rem; }
+
+        /* --- Inputs & Buttons --- */
+        .input-row { display: flex; gap: 10px; margin-bottom: 2rem; }
+        input, select { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none; }
+        input { flex: 2; }
+        .add-btn { background: var(--accent); border: none; color: white; padding: 0 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        /* --- List Items --- */
+        .list-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; margin-bottom: 10px;
+            transition: 0.2s;
+        }
+        .list-item:hover { background: rgba(255,255,255,0.07); }
+        .priority-tag { font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; margin-right: 10px; }
+        .p-high { background: var(--high-priority); }
+        .p-mid { background: var(--mid-priority); color: black; }
+        .p-low { background: var(--low-priority); }
+        
+        .check-btn { color: #10b981; cursor: pointer; font-size: 1.2rem; }
+        .delete-btn { color: #ef4444; cursor: pointer; margin-left: 15px; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="rocket-icon">🚀</div>
+            <h2 id="side-name">Commander</h2>
+            
+            <div class="stat-group">
+                <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+                    <span>Level <span id="lvl">1</span></span>
+                    <span>XP: <span id="xp-val">0</span>/100</span>
+                </div>
+                <div class="bar-bg"><div id="xp-bar" class="bar-fill"></div></div>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-btn active" onclick="switchView('home', this)"><i class="fas fa-th-large"></i> Dashboard</button>
+                <button class="nav-btn" onclick="switchView('tasks', this)"><i class="fas fa-check-circle"></i> Tasks</button>
+                <button class="nav-btn" onclick="switchView('goals', this)"><i class="fas fa-bullseye"></i> Goals</button>
+                <button class="nav-btn" onclick="switchView('dump', this)"><i class="fas fa-brain"></i> Brain Dump</button>
+            </nav>
+        </aside>
+
+        <main>
+            <section id="home" class="view active">
+                <div class="header-flex">
+                    <h1>Mission Control</h1>
+                </div>
+                <div class="card">
+                    <h3>Rename Commander</h3>
+                    <div class="input-row" style="margin-top:10px;">
+                        <input type="text" id="name-change" placeholder="Enter name...">
+                        <button class="add-btn" onclick="updateName()">Update</button>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                    <div class="card"><h3>Tasks Done</h3><h1 id="stat-tasks">0</h1></div>
+                    <div class="card"><h3>Goals Met</h3><h1 id="stat-goals">0</h1></div>
+                </div>
+            </section>
+
+            <section id="tasks" class="view">
+                <h1>Active Tasks</h1>
+                <p style="color:#94a3b8; margin-bottom:1rem;">Short term missions for quick XP.</p>
+                <div class="input-row">
+                    <input type="text" id="task-in" placeholder="New task...">
+                    <select id="task-priority">
+                        <option value="low">Low</option>
+                        <option value="mid">Mid</option>
+                        <option value="high">High</option>
+                    </select>
+                    <button class="add-btn" onclick="add('tasks')">Launch</button>
+                </div>
+                <div id="list-tasks"></div>
+            </section>
+
+            <section id="goals" class="view">
+                <h1>Long-term Goals</h1>
+                <p style="color:#94a3b8; margin-bottom:1rem;">Major milestones. Massive XP rewards.</p>
+                <div class="input-row">
+                    <input type="text" id="goal-in" placeholder="Big goal...">
+                    <button class="add-btn" onclick="add('goals')">Establish</button>
+                </div>
+                <div id="list-goals"></div>
+            </section>
+
+            <section id="dump" class="view">
+                <h1>Brain Dump</h1>
+                <textarea id="note-in" style="width:100%; height:100px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:white; border-radius:8px; padding:10px; margin-bottom:10px;"></textarea>
+                <button class="add-btn" style="width:100%; padding:15px;" onclick="addNote()">Log Thought</button>
+                <div id="list-notes" style="margin-top:2rem;"></div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        let state = {
+            name: "Commander", level: 1, xp: 0, 
+            tasks: [], goals: [], notes: [],
+            doneTasks: 0, doneGoals: 0
+        };
+
+        function init() {
+            const data = localStorage.getItem('rocketRPG');
+            if(data) state = JSON.parse(data);
+            render();
+        }
+
+        function save() {
+            localStorage.setItem('rocketRPG', JSON.stringify(state));
+            render();
+        }
+
+        function switchView(id, btn) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        function updateName() {
+            const val = document.getElementById('name-change').value;
+            if(val) { state.name = val; save(); document.getElementById('name-change').value = ''; }
+        }
+
+        function add(type) {
+            const input = document.getElementById(type === 'tasks' ? 'task-in' : 'goal-in');
+            if(!input.value) return;
+            
+            const item = { id: Date.now(), text: input.value, done: false };
+            if(type === 'tasks') item.priority = document.getElementById('task-priority').value;
+            
+            state[type].push(item);
+            input.value = '';
+            save();
+        }
+
+        function complete(type, id) {
+            const item = state[type].find(i => i.id === id);
+            if(item && !item.done) {
+                item.done = true;
+                if(type === 'tasks') {
+                    state.xp += 15; state.doneTasks++;
+                } else {
+                    state.xp += 100; state.doneGoals++;
+                }
+                checkLevel();
+                save();
+            }
+        }
+
+        function remove(type, id) {
+            state[type] = state[type].filter(i => i.id !== id);
+            save();
+        }
+
+        function addNote() {
+            const val = document.getElementById('note-in').value;
+            if(!val) return;
+            state.notes.unshift({ id: Date.now(), text: val });
+            document.getElementById('note-in').value = '';
+            save();
+        }
+
+        function checkLevel() {
+            if(state.xp >= 100) {
+                state.level++;
+                state.xp -= 100;
+                alert("Level Up! Rocket engines intensified.");
+            }
+        }
+
+        function render() {
+            document.getElementById('side-name').innerText = state.name;
+            document.getElementById('lvl').innerText = state.level;
+            document.getElementById('xp-val').innerText = state.xp;
+            document.getElementById('xp-bar').style.width = state.xp + '%';
+            document.getElementById('stat-tasks').innerText = state.doneTasks;
+            document.getElementById('stat-goals').innerText = state.doneGoals;
+
+            // Render Tasks
+            document.getElementById('list-tasks').innerHTML = state.tasks.map(t => `
+                <div class="list-item" style="opacity: ${t.done ? 0.4 : 1}">
+                    <div>
+                        <span class="priority-tag p-${t.priority}">${t.priority}</span>
+                        <span>${t.text}</span>
+                    </div>
+                    <div>
+                        ${!t.done ? `<i class="fas fa-check-circle check-btn" onclick="complete('tasks', ${t.id})"></i>` : ''}
+                        <i class="fas fa-trash delete-btn" onclick="remove('tasks', ${t.id})"></i>
+                    </div>
+                </div>
+            `).join('');
+
+            // Render Goals
+            document.getElementById('list-goals').innerHTML = state.goals.map(g => `
+                <div class="list-item" style="opacity: ${g.done ? 0.4 : 1}">
+                    <span><i class="fas fa-star" style="color:var(--accent); margin-right:10px;"></i> ${g.text}</span>
+                    <div>
+                        ${!g.done ? `<i class="fas fa-check-circle check-btn" onclick="complete('goals', ${g.id})"></i>` : ''}
+                        <i class="fas fa-trash delete-btn" onclick="remove('goals', ${g.id})"></i>
+                    </div>
+                </div>
+            `).join('');
+
+            // Render Notes
+            document.getElementById('list-notes').innerHTML = state.notes.map(n => `
+                <div class="card" style="display:flex; justify-content:space-between;">
+                    <p>${n.text}</p>
+                    <i class="fas fa-trash delete-btn" onclick="remove('notes', ${n.id})"></i>
+                </div>
+            `).join('');
+        }
+
+        init();
+    </script>
+</body>
+</html>
